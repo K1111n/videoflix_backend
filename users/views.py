@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
@@ -6,9 +6,11 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
-from .serializers import RegisterSerializer, PasswordConfirmSerializer
-from .utils import send_activation_email, send_password_reset_email
+from .serializers import RegisterSerializer, PasswordConfirmSerializer, LoginSerializer
+from .utils import send_activation_email, send_password_reset_email, set_auth_cookies
 
 User = get_user_model()
 
@@ -75,3 +77,63 @@ class PasswordConfirmView(APIView):
             return User.objects.get(pk=uid)
         except (User.DoesNotExist, ValueError):
             return None
+
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = authenticate(request, email=serializer.validated_data['email'], password=serializer.validated_data['password'])
+        if user is None or not user.is_active:
+            return Response({'detail': 'Please check your inputs and try again.'}, status=status.HTTP_400_BAD_REQUEST)
+        response = Response({'detail': 'Login successful', 'user': {'id': user.id, 'username': user.email}})
+        set_auth_cookies(response, user)
+        return response
+
+
+class LogoutView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response({'detail': 'Refresh token missing.'}, status=status.HTTP_400_BAD_REQUEST)
+        self._blacklist_token(refresh_token)
+        response = Response({'detail': 'Logout successful! All tokens will be deleted. Refresh token is now invalid.'})
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
+
+    def _blacklist_token(self, token):
+        try:
+            RefreshToken(token).blacklist()
+        except TokenError:
+            pass
+
+
+class TokenRefreshView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response({'detail': 'Refresh token missing.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            refresh = RefreshToken(refresh_token)
+            access_token = str(refresh.access_token)
+        except TokenError:
+            return Response({'detail': 'Invalid refresh token.'}, status=status.HTTP_401_UNAUTHORIZED)
+        response = Response({'detail': 'Token refreshed', 'access': access_token})
+        from django.conf import settings as django_settings
+        jwt_settings = django_settings.SIMPLE_JWT
+        response.set_cookie(
+            key='access_token',
+            value=access_token,
+            httponly=jwt_settings['AUTH_COOKIE_HTTPONLY'],
+            samesite=jwt_settings['AUTH_COOKIE_SAMESITE'],
+            max_age=int(jwt_settings['ACCESS_TOKEN_LIFETIME'].total_seconds()),
+        )
+        return response
