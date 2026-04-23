@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import RegisterSerializer
-from .utils import send_activation_email
+from .utils import send_activation_email, send_password_reset_email
 
 User = get_user_model()
 
@@ -42,3 +42,14 @@ class ActivateAccountView(APIView):
             return User.objects.get(pk=uid)
         except (User.DoesNotExist, ValueError):
             return None
+
+
+class PasswordResetView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '')
+        user = User.objects.filter(email=email).first()
+        if user:
+            send_password_reset_email(user)
+        return Response({'detail': 'An email has been sent to reset your password.'})
