@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.conf import settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 def build_activation_url(user):
@@ -23,6 +24,25 @@ def send_activation_email(user):
     )
     email.content_subtype = 'html'
     email.send()
+
+
+def set_auth_cookies(response, user):
+    refresh = RefreshToken.for_user(user)
+    jwt_settings = settings.SIMPLE_JWT
+    response.set_cookie(
+        key='access_token',
+        value=str(refresh.access_token),
+        httponly=jwt_settings['AUTH_COOKIE_HTTPONLY'],
+        samesite=jwt_settings['AUTH_COOKIE_SAMESITE'],
+        max_age=int(jwt_settings['ACCESS_TOKEN_LIFETIME'].total_seconds()),
+    )
+    response.set_cookie(
+        key='refresh_token',
+        value=str(refresh),
+        httponly=jwt_settings['AUTH_COOKIE_HTTPONLY'],
+        samesite=jwt_settings['AUTH_COOKIE_SAMESITE'],
+        max_age=int(jwt_settings['REFRESH_TOKEN_LIFETIME'].total_seconds()),
+    )
 
 
 def build_password_reset_url(user):
