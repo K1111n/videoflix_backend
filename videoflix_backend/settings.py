@@ -155,3 +155,5 @@ EMAIL_HOST_PASSWORD = 'dein-app-passwort'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 FRONTEND_URL = 'http://localhost:5500'
+
+AUTH_USER_MODEL = 'users.CustomUser'
