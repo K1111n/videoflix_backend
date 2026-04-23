@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import RegisterSerializer
+from .serializers import RegisterSerializer, PasswordConfirmSerializer
 from .utils import send_activation_email, send_password_reset_email
 
 User = get_user_model()
@@ -53,3 +53,25 @@ class PasswordResetView(APIView):
         if user:
             send_password_reset_email(user)
         return Response({'detail': 'An email has been sent to reset your password.'})
+
+
+class PasswordConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, uidb64, token):
+        user = self._get_user(uidb64)
+        if user is None or not default_token_generator.check_token(user, token):
+            return Response({'error': 'Invalid or expired link.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = PasswordConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        return Response({'detail': 'Your Password has been successfully reset.'})
+
+    def _get_user(self, uidb64):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            return User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError):
+            return None
