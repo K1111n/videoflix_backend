@@ -7,3 +7,4 @@ PyJWT==2.12.1
 redis==7.4.0
 rq==2.8.0
 Pillow==12.2.0
+python-dotenv==1.2.2
