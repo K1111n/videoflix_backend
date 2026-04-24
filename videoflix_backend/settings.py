@@ -1,11 +1,15 @@
 from pathlib import Path
 from datetime import timedelta
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-+%ynpl#6d)+d^a8j1ie!1fe8lf=url3fj2e*^bl#ycmwu08)$j'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -61,11 +65,11 @@ WSGI_APPLICATION = 'videoflix_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'videoflix',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'videoflix'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -130,31 +134,31 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 # Redis
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': f'{REDIS_URL}/1',
     }
 }
 
 RQ_QUEUES = {
     'default': {
-        'HOST': '127.0.0.1',
-        'PORT': 6379,
-        'DB': 0,
+        'USE_REDIS_CACHE': 'default',
     }
 }
 
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'deine@gmail.com'
-EMAIL_HOST_PASSWORD = 'dein-app-passwort'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-FRONTEND_URL = 'http://localhost:5500'
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5500')
 
 AUTH_USER_MODEL = 'users.CustomUser'
