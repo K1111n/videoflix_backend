@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_str
@@ -127,8 +128,7 @@ class TokenRefreshView(APIView):
         except TokenError:
             return Response({'detail': 'Invalid refresh token.'}, status=status.HTTP_401_UNAUTHORIZED)
         response = Response({'detail': 'Token refreshed', 'access': access_token})
-        from django.conf import settings as django_settings
-        jwt_settings = django_settings.SIMPLE_JWT
+        jwt_settings = settings.SIMPLE_JWT
         response.set_cookie(
             key='access_token',
             value=access_token,
