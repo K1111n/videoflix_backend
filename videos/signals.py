@@ -9,4 +9,4 @@ from .utils import convert_to_hls
 def start_hls_conversion(sender, instance, created, **kwargs):
     if created:
         queue = django_rq.get_queue('default')
-        queue.enqueue(convert_to_hls, instance)
+        queue.enqueue(convert_to_hls, instance.id)

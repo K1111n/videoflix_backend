@@ -29,7 +29,9 @@ def build_ffmpeg_command(input_path, output_dir, resolution, config):
     ]
 
 
-def convert_to_hls(video):
+def convert_to_hls(video_id):
+    from .models import Video
+    video = Video.objects.get(pk=video_id)
     input_path = Path(video.video_file.path)
     for resolution, config in RESOLUTIONS.items():
         output_dir = get_output_dir(video) / resolution
