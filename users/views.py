@@ -16,6 +16,14 @@ from .utils import send_activation_email, send_password_reset_email, set_auth_co
 User = get_user_model()
 
 
+def get_user_from_uidb64(uidb64):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        return User.objects.get(pk=uid)
+    except (User.DoesNotExist, ValueError):
+        return None
+
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -32,19 +40,12 @@ class ActivateAccountView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
-        user = self._get_user(uidb64)
+        user = get_user_from_uidb64(uidb64)
         if user is None or not default_token_generator.check_token(user, token):
             return Response({'error': 'Activation failed.'}, status=status.HTTP_400_BAD_REQUEST)
         user.is_active = True
         user.save()
         return Response({'message': 'Account successfully activated.'})
-
-    def _get_user(self, uidb64):
-        try:
-            uid = force_str(urlsafe_base64_decode(uidb64))
-            return User.objects.get(pk=uid)
-        except (User.DoesNotExist, ValueError):
-            return None
 
 
 class PasswordResetView(APIView):
@@ -62,7 +63,7 @@ class PasswordConfirmView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
-        user = self._get_user(uidb64)
+        user = get_user_from_uidb64(uidb64)
         if user is None or not default_token_generator.check_token(user, token):
             return Response({'error': 'Invalid or expired link.'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = PasswordConfirmSerializer(data=request.data)
@@ -71,13 +72,6 @@ class PasswordConfirmView(APIView):
         user.set_password(serializer.validated_data['new_password'])
         user.save()
         return Response({'detail': 'Your Password has been successfully reset.'})
-
-    def _get_user(self, uidb64):
-        try:
-            uid = force_str(urlsafe_base64_decode(uidb64))
-            return User.objects.get(pk=uid)
-        except (User.DoesNotExist, ValueError):
-            return None
 
 
 class LoginView(APIView):
