@@ -14,6 +14,26 @@ def get_output_dir(video):
     return Path(settings.MEDIA_ROOT) / 'videos' / 'hls' / str(video.id)
 
 
+def build_thumbnail_command(input_path, output_path):
+    return [
+        'ffmpeg', '-i', str(input_path),
+        '-ss', '00:00:01',
+        '-vframes', '1',
+        '-q:v', '2',
+        str(output_path),
+        '-y',
+    ]
+
+
+def generate_thumbnail(video, input_path):
+    from django.conf import settings
+    output_path = Path(settings.MEDIA_ROOT) / 'thumbnails' / f'{video.id}.jpg'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(build_thumbnail_command(input_path, output_path), check=True)
+    video.thumbnail = f'thumbnails/{video.id}.jpg'
+    video.save(update_fields=['thumbnail'])
+
+
 def build_ffmpeg_command(input_path, output_dir, resolution, config):
     playlist = output_dir / 'index.m3u8'
     segment = output_dir / '%03d.ts'
@@ -33,6 +53,8 @@ def convert_to_hls(video_id):
     from .models import Video
     video = Video.objects.get(pk=video_id)
     input_path = Path(video.video_file.path)
+    if not video.thumbnail:
+        generate_thumbnail(video, input_path)
     for resolution, config in RESOLUTIONS.items():
         output_dir = get_output_dir(video) / resolution
         output_dir.mkdir(parents=True, exist_ok=True)
