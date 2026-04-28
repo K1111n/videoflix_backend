@@ -11,12 +11,14 @@ User = get_user_model()
 
 
 def build_activation_url(user):
+    """Build the account activation URL containing uid and token."""
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
     return f"{settings.FRONTEND_URL}/pages/auth/activate.html?uid={uid}&token={token}"
 
 
 def send_activation_email(user_id):
+    """Fetch the user by id and send an HTML activation email."""
     user = User.objects.get(pk=user_id)
     activation_url = build_activation_url(user)
     html_body = render_to_string('emails/activation_email.html', {'activation_url': activation_url})
@@ -31,6 +33,7 @@ def send_activation_email(user_id):
 
 
 def set_auth_cookies(response, user):
+    """Attach JWT access and refresh token cookies to the response."""
     refresh = RefreshToken.for_user(user)
     jwt_settings = settings.SIMPLE_JWT
     response.set_cookie(
@@ -50,12 +53,14 @@ def set_auth_cookies(response, user):
 
 
 def build_password_reset_url(user):
+    """Build the password reset URL containing uid and token."""
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
     return f"{settings.FRONTEND_URL}/pages/auth/confirm_password.html?uid={uid}&token={token}"
 
 
 def send_password_reset_email(user_id):
+    """Fetch the user by id and send an HTML password reset email."""
     user = User.objects.get(pk=user_id)
     reset_url = build_password_reset_url(user)
     html_body = render_to_string('emails/password_reset_email.html', {'reset_url': reset_url})

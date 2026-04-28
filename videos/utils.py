@@ -5,16 +5,18 @@ import subprocess
 RESOLUTIONS = {
     '480p':  {'size': '854x480',  'bitrate': '800k'},
     '720p':  {'size': '1280x720', 'bitrate': '2500k'},
-    '1080p': {'size': '1920x1080','bitrate': '5000k'},
+    '1080p': {'size': '1920x1080', 'bitrate': '5000k'},
 }
 
 
 def get_output_dir(video):
+    """Return the HLS output directory path for the given video."""
     from django.conf import settings
     return Path(settings.MEDIA_ROOT) / 'videos' / 'hls' / str(video.id)
 
 
 def build_thumbnail_command(input_path, output_path):
+    """Build the ffmpeg command to extract a single frame as a thumbnail."""
     return [
         'ffmpeg', '-i', str(input_path),
         '-ss', '00:00:01',
@@ -26,6 +28,7 @@ def build_thumbnail_command(input_path, output_path):
 
 
 def generate_thumbnail(video, input_path):
+    """Extract a thumbnail from the video and save the path on the model."""
     from django.conf import settings
     output_path = Path(settings.MEDIA_ROOT) / 'thumbnails' / f'{video.id}.jpg'
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -35,6 +38,7 @@ def generate_thumbnail(video, input_path):
 
 
 def build_ffmpeg_command(input_path, output_dir, resolution, config):
+    """Build the ffmpeg command to convert a video to HLS for a given resolution."""
     playlist = output_dir / 'index.m3u8'
     segment = output_dir / '%03d.ts'
     return [
@@ -50,12 +54,14 @@ def build_ffmpeg_command(input_path, output_dir, resolution, config):
 
 
 def regenerate_thumbnail(video_id):
+    """Load the video by id and regenerate its thumbnail."""
     from .models import Video
     video = Video.objects.get(pk=video_id)
     generate_thumbnail(video, Path(video.video_file.path))
 
 
 def convert_to_hls(video_id):
+    """Convert the uploaded video to HLS segments for all defined resolutions."""
     from .models import Video
     video = Video.objects.get(pk=video_id)
     input_path = Path(video.video_file.path)

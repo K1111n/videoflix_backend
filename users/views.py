@@ -18,6 +18,7 @@ User = get_user_model()
 
 
 def get_user_from_uidb64(uidb64):
+    """Decode a base64 uid and return the matching user, or None."""
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         return User.objects.get(pk=uid)
@@ -26,9 +27,12 @@ def get_user_from_uidb64(uidb64):
 
 
 class RegisterView(APIView):
+    """Handle user registration and enqueue activation email."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Create a new inactive user and send an activation email."""
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -38,9 +42,12 @@ class RegisterView(APIView):
 
 
 class ActivateAccountView(APIView):
+    """Activate a user account via email link."""
+
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
+        """Validate token and set the user account to active."""
         user = get_user_from_uidb64(uidb64)
         if user is None or not default_token_generator.check_token(user, token):
             return Response({'error': 'Activation failed.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -50,9 +57,12 @@ class ActivateAccountView(APIView):
 
 
 class PasswordResetView(APIView):
+    """Send a password reset email to the given address."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Enqueue a password reset email if the address belongs to a known user."""
         email = request.data.get('email', '')
         user = User.objects.filter(email=email).first()
         if user:
@@ -61,9 +71,12 @@ class PasswordResetView(APIView):
 
 
 class PasswordConfirmView(APIView):
+    """Set a new password using a token from the reset email."""
+
     permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
+        """Validate token and save the new password."""
         user = get_user_from_uidb64(uidb64)
         if user is None or not default_token_generator.check_token(user, token):
             return Response({'error': 'Invalid or expired link.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -76,9 +89,12 @@ class PasswordConfirmView(APIView):
 
 
 class LoginView(APIView):
+    """Authenticate a user and set JWT cookies."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Validate credentials and return access and refresh tokens as cookies."""
         serializer = LoginSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -91,9 +107,12 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
+    """Blacklist the refresh token and clear auth cookies."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Delete auth cookies and invalidate the refresh token."""
         refresh_token = request.COOKIES.get('refresh_token')
         if not refresh_token:
             return Response({'detail': 'Refresh token missing.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -104,6 +123,7 @@ class LogoutView(APIView):
         return response
 
     def _blacklist_token(self, token):
+        """Add the given refresh token to the blacklist, ignoring invalid tokens."""
         try:
             RefreshToken(token).blacklist()
         except TokenError:
@@ -111,9 +131,12 @@ class LogoutView(APIView):
 
 
 class TokenRefreshView(APIView):
+    """Issue a new access token using the refresh token cookie."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Validate the refresh token cookie and set a new access token cookie."""
         refresh_token = request.COOKIES.get('refresh_token')
         if not refresh_token:
             return Response({'detail': 'Refresh token missing.'}, status=status.HTTP_400_BAD_REQUEST)
