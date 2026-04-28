@@ -1,6 +1,6 @@
-import django_rq
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import django_rq
 from .models import Video
 from .utils import convert_to_hls, regenerate_thumbnail
 
