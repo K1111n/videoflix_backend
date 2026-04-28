@@ -49,6 +49,12 @@ def build_ffmpeg_command(input_path, output_dir, resolution, config):
     ]
 
 
+def regenerate_thumbnail(video_id):
+    from .models import Video
+    video = Video.objects.get(pk=video_id)
+    generate_thumbnail(video, Path(video.video_file.path))
+
+
 def convert_to_hls(video_id):
     from .models import Video
     video = Video.objects.get(pk=video_id)
