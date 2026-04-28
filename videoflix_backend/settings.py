@@ -145,7 +145,7 @@ CACHES = {
 
 RQ_QUEUES = {
     'default': {
-        'USE_REDIS_CACHE': 'default',
+        'URL': os.getenv('REDIS_URL', 'redis://redis:6379'),
     }
 }
 
