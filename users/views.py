@@ -1,3 +1,4 @@
+import django_rq
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.tokens import default_token_generator
@@ -32,7 +33,7 @@ class RegisterView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         user = serializer.save()
-        send_activation_email(user)
+        django_rq.enqueue(send_activation_email, user.id)
         return Response({'user': {'id': user.id, 'email': user.email}}, status=status.HTTP_201_CREATED)
 
 
@@ -55,7 +56,7 @@ class PasswordResetView(APIView):
         email = request.data.get('email', '')
         user = User.objects.filter(email=email).first()
         if user:
-            send_password_reset_email(user)
+            django_rq.enqueue(send_password_reset_email, user.id)
         return Response({'detail': 'An email has been sent to reset your password.'})
 
 

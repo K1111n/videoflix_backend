@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
@@ -6,6 +7,8 @@ from django.utils.http import urlsafe_base64_encode
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+User = get_user_model()
+
 
 def build_activation_url(user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -13,7 +16,8 @@ def build_activation_url(user):
     return f"{settings.FRONTEND_URL}/pages/auth/activate.html?uid={uid}&token={token}"
 
 
-def send_activation_email(user):
+def send_activation_email(user_id):
+    user = User.objects.get(pk=user_id)
     activation_url = build_activation_url(user)
     html_body = render_to_string('emails/activation_email.html', {'activation_url': activation_url})
     email = EmailMessage(
@@ -51,7 +55,8 @@ def build_password_reset_url(user):
     return f"{settings.FRONTEND_URL}/pages/auth/confirm_password.html?uid={uid}&token={token}"
 
 
-def send_password_reset_email(user):
+def send_password_reset_email(user_id):
+    user = User.objects.get(pk=user_id)
     reset_url = build_password_reset_url(user)
     html_body = render_to_string('emails/password_reset_email.html', {'reset_url': reset_url})
     email = EmailMessage(
