@@ -1,30 +1,30 @@
 # Videoflix Backend
 
-REST API Backend für die Videoflix-Streaming-Plattform. Gebaut mit Django, Django REST Framework, PostgreSQL, Redis und Django RQ.
+REST API backend for the Videoflix streaming platform. Built with Django, Django REST Framework, PostgreSQL, Redis and Django RQ.
 
 ## Features
 
-- JWT-Authentifizierung via HttpOnly-Cookies
-- Benutzerregistrierung mit E-Mail-Aktivierung
-- Passwort-Reset per E-Mail
-- HLS-Video-Streaming (480p, 720p, 1080p)
-- Automatische HLS-Konvertierung und Thumbnail-Generierung per ffmpeg
-- Hintergrundverarbeitung mit Django RQ und Redis
-- PostgreSQL als Datenbank, Redis als Cache
+- JWT authentication via HttpOnly cookies
+- User registration with email activation
+- Password reset via email
+- HLS video streaming (480p, 720p, 1080p)
+- Automatic HLS conversion and thumbnail generation via ffmpeg
+- Background processing with Django RQ and Redis
+- PostgreSQL as database, Redis as cache
 
-## Voraussetzungen
+## Requirements
 
 - Docker & Docker Compose
 
 ## Setup
 
-**1. Repository klonen**
+**1. Clone the repository**
 ```bash
 git clone <repo-url>
 cd videoflix_backend
 ```
 
-**2. Umgebungsvariablen einrichten**
+**2. Set up environment variables**
 
 Mac/Linux:
 ```bash
@@ -34,51 +34,51 @@ Windows:
 ```bash
 copy .env.example .env
 ```
-Anschließend `.env` mit deinen Werten befüllen (E-Mail-Zugangsdaten, Secret Key usw.).
+Fill in your values in `.env` (email credentials, secret key, etc.).
 
-**3. Starten**
+**3. Start**
 ```bash
 docker compose up --build
 ```
 
-Die API ist dann erreichbar unter: `http://localhost:8000`
+The API will be available at: `http://localhost:8000`
 
 ## Services
 
-| Service | Beschreibung |
+| Service | Description |
 |---------|-------------|
-| `web` | Django-Anwendung |
-| `worker` | RQ-Worker für Hintergrundaufgaben |
-| `db` | PostgreSQL-Datenbank |
-| `redis` | Redis für Cache und Job-Queue |
+| `web` | Django application |
+| `worker` | RQ worker for background tasks |
+| `db` | PostgreSQL database |
+| `redis` | Redis for cache and job queue |
 
-## API-Endpunkte
+## API Endpoints
 
-Eine vollständige Übersicht aller Endpunkte befindet sich in [api-endpoints.md](api-endpoints.md).
+A full overview of all endpoints can be found in [api-endpoints.md](api-endpoints.md).
 
-### Authentifizierung
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|-------------|
-| POST | `/api/register/` | Benutzer registrieren |
-| GET | `/api/activate/<uidb64>/<token>/` | Account aktivieren |
-| POST | `/api/login/` | Einloggen |
-| POST | `/api/logout/` | Ausloggen |
-| POST | `/api/token/refresh/` | Access-Token erneuern |
-| POST | `/api/password_reset/` | Passwort-Reset anfordern |
-| POST | `/api/password_confirm/<uidb64>/<token>/` | Neues Passwort setzen |
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/register/` | Register a new user |
+| GET | `/api/activate/<uidb64>/<token>/` | Activate account |
+| POST | `/api/login/` | Log in |
+| POST | `/api/logout/` | Log out |
+| POST | `/api/token/refresh/` | Refresh access token |
+| POST | `/api/password_reset/` | Request password reset |
+| POST | `/api/password_confirm/<uidb64>/<token>/` | Set new password |
 
 ### Video
-| Methode | Endpunkt | Beschreibung |
-|---------|----------|-------------|
-| GET | `/api/video/` | Alle Videos abrufen |
-| GET | `/api/video/<id>/<resolution>/index.m3u8` | HLS-Playlist |
-| GET | `/api/video/<id>/<resolution>/<segment>/` | HLS-Segment |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/video/` | List all videos |
+| GET | `/api/video/<id>/<resolution>/index.m3u8` | HLS playlist |
+| GET | `/api/video/<id>/<resolution>/<segment>/` | HLS segment |
 
 ## Admin
 
-Django Admin erreichbar unter `http://localhost:8000/admin/`
+Django Admin available at `http://localhost:8000/admin/`
 
-Superuser anlegen:
+Create a superuser:
 ```bash
 docker compose exec web python manage.py createsuperuser
 ```
