@@ -118,8 +118,8 @@ class LogoutView(APIView):
             return Response({'detail': 'Refresh token missing.'}, status=status.HTTP_400_BAD_REQUEST)
         self._blacklist_token(refresh_token)
         response = Response({'detail': 'Logout successful! All tokens will be deleted. Refresh token is now invalid.'})
-        response.delete_cookie('access_token')
-        response.delete_cookie('refresh_token')
+        response.delete_cookie('access_token', samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'])
+        response.delete_cookie('refresh_token', samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'])
         return response
 
     def _blacklist_token(self, token):
@@ -152,6 +152,7 @@ class TokenRefreshView(APIView):
             value=access_token,
             httponly=jwt_settings['AUTH_COOKIE_HTTPONLY'],
             samesite=jwt_settings['AUTH_COOKIE_SAMESITE'],
+            secure=jwt_settings['AUTH_COOKIE_SECURE'],
             max_age=int(jwt_settings['ACCESS_TOKEN_LIFETIME'].total_seconds()),
         )
         return response

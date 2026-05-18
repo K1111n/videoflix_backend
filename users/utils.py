@@ -41,6 +41,7 @@ def set_auth_cookies(response, user):
         value=str(refresh.access_token),
         httponly=jwt_settings['AUTH_COOKIE_HTTPONLY'],
         samesite=jwt_settings['AUTH_COOKIE_SAMESITE'],
+        secure=jwt_settings['AUTH_COOKIE_SECURE'],
         max_age=int(jwt_settings['ACCESS_TOKEN_LIFETIME'].total_seconds()),
     )
     response.set_cookie(
@@ -48,6 +49,7 @@ def set_auth_cookies(response, user):
         value=str(refresh),
         httponly=jwt_settings['AUTH_COOKIE_HTTPONLY'],
         samesite=jwt_settings['AUTH_COOKIE_SAMESITE'],
+        secure=jwt_settings['AUTH_COOKIE_SECURE'],
         max_age=int(jwt_settings['REFRESH_TOKEN_LIFETIME'].total_seconds()),
     )
 
