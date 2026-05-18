@@ -1,0 +1,101 @@
+services:
+  - type: web
+    name: videoflix-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: "videoflix-backend.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://your-site.netlify.app"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://your-site.netlify.app"
+      - key: AUTH_COOKIE_SAMESITE
+        value: "None"
+      - key: AUTH_COOKIE_SECURE
+        value: "True"
+      - key: FRONTEND_URL
+        value: "https://your-site.netlify.app"
+      - key: DB_NAME
+        fromDatabase:
+          name: videoflix-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: videoflix-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: videoflix-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: videoflix-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: videoflix-db
+          property: port
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: videoflix-redis
+          property: connectionString
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+
+  - type: worker
+    name: videoflix-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python manage.py rqworker default
+    envVars:
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: videoflix-backend
+          envVarKey: SECRET_KEY
+      - key: DB_NAME
+        fromDatabase:
+          name: videoflix-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: videoflix-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: videoflix-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: videoflix-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: videoflix-db
+          property: port
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: videoflix-redis
+          property: connectionString
+
+  - type: redis
+    name: videoflix-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+
+databases:
+  - name: videoflix-db
+    databaseName: videoflix
+    user: videoflix
+    plan: free
