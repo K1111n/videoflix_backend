@@ -9,3 +9,5 @@ redis==7.4.0
 rq==2.8.0
 Pillow==12.2.0
 python-dotenv==1.2.2
+gunicorn==21.2.0
+whitenoise==6.8.2

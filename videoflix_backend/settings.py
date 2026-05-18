@@ -12,6 +12,9 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'web']
+_extra_hosts = os.getenv('ALLOWED_HOSTS', '')
+if _extra_hosts:
+    ALLOWED_HOSTS += [h.strip() for h in _extra_hosts.split(',') if h.strip()]
 
 
 # Apps
@@ -32,6 +35,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -92,6 +96,8 @@ USE_TZ = True
 
 # Static & Media
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -107,6 +113,10 @@ REST_FRAMEWORK = {
 }
 
 
+# Cookie security — SameSite=None + Secure=True erforderlich für Cross-Origin (Netlify → Render)
+_cookie_samesite = os.getenv('AUTH_COOKIE_SAMESITE', 'Lax')
+_cookie_secure = os.getenv('AUTH_COOKIE_SECURE', 'False') == 'True'
+
 # JWT (SimpleJWT)
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
@@ -116,8 +126,14 @@ SIMPLE_JWT = {
     'AUTH_COOKIE': 'access_token',
     'AUTH_COOKIE_REFRESH': 'refresh_token',
     'AUTH_COOKIE_HTTPONLY': True,
-    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_SAMESITE': _cookie_samesite,
+    'AUTH_COOKIE_SECURE': _cookie_secure,
 }
+
+CSRF_COOKIE_SAMESITE = _cookie_samesite
+CSRF_COOKIE_SECURE = _cookie_secure
+SESSION_COOKIE_SAMESITE = _cookie_samesite
+SESSION_COOKIE_SECURE = _cookie_secure
 
 
 # CORS — Frontend darf Requests schicken
@@ -125,12 +141,18 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
 ]
+_extra_origins = os.getenv('CORS_ALLOWED_ORIGINS', '')
+if _extra_origins:
+    CORS_ALLOWED_ORIGINS += [o.strip() for o in _extra_origins.split(',') if o.strip()]
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
 ]
+_extra_csrf = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if _extra_csrf:
+    CSRF_TRUSTED_ORIGINS += [o.strip() for o in _extra_csrf.split(',') if o.strip()]
 
 
 # Redis
